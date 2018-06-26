@@ -6,7 +6,8 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from model import SavedTotal
 
 app = Flask(__name__)
-app.secret_key = b'\xb6x(\xd67\x1f\xa7\x15\x92\xf1VqU\xe9|\xbcqu\xac\xf6\x16\xa8\x8f\xe5'
+#app.secret_key = b'\xf1A\x88f\x1a@6\x1d\xa2\xc8J\xfc\x9e\x9c1\x86p\x04\xc1\xc7\xc7\x03\xfd\xbd'
+app.secret_key = os.environ.get('SECRET_KEY').encode()
 
 @app.route('/')
 def home():
@@ -17,16 +18,16 @@ def retrieve():
     code = request.args.get('code', None)
 
     if code is None:
-        return render_template("retrieve.jinja2") 
+        return render_template("retrieve.jinja2")
     try:
         saved_total = SavedTotal.get(SavedTotal.code == code)
     except SavedTotal.DoesNotExist:
-        return render_template("retrieve.jinja2")
-    
+        return render_template("retrieve.jinja2", error='Code not found.')
+
     session['total'] = saved_total.value
 
     return redirect(url_for('add'))
-    
+
 
 @app.route('/add', methods=['GET', 'POST'])
 def add():
@@ -42,7 +43,7 @@ def add():
 @app.route('/save', methods=['POST'])
 def save():
     total = session.get('total', 0)
-    code = base64.b32encode(os.urandom(8)).decode().strip('=')
+    code = base64.b32encode(os.urandom(8)).decode().strip("=")
 
     saved_total = SavedTotal(value=total, code=code)
     saved_total.save()
@@ -51,6 +52,5 @@ def save():
 
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 6738))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-
